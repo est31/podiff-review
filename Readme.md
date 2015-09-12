@@ -15,7 +15,8 @@ and then podiff-review asks you for each changed translation whether it is accep
 ## Setup
 
 Before running `podiff-review`, you need to set up some things first.
-First, you'll need API access to the microsoft translator API ([Step through on how to set it up](http://blogs.msdn.com/b/translation/p/gettingstarted1.aspx) ). Microsoft gives one 2 million translated chars for free, so don't worry, you don't have to pay for "normal" amounts of translations to review.
+First, you'll need API keys for the microsoft translator API ([Walkthrough on how to set it up](http://blogs.msdn.com/b/translation/p/gettingstarted1.aspx) ).
+Microsoft gives one 2 million translated chars for free, so don't worry, you don't have to pay for "normal" amounts of translations to review.
 
 After having API access up, you should create a `settings.toml` file in the directory you want to run `podiff-review`, with the following content:
 
@@ -44,6 +45,7 @@ cargo run commit-id
 
 The `commit-id` is the usual git hash of the commit to review in git.
 
-The tool will then ask you about translation changes. You can answer with `y` for Ok, `n` for not ok, and `l` for "I want to look at it **l**ater". It automatically puts answered questions into `answers.toml`, for later inspection.
+The tool will then ask you about translation changes. You can answer with `y` for Ok, `n` for not Ok, and `l` for "I want to look at it **l**ater".
+It automatically puts answered questions into `answers.toml`, for later inspection.
 
 `podiff-review` will display whether a commit is regarded as "approved", and provide stats about how many lines failed.
