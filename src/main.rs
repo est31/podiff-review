@@ -95,7 +95,6 @@ fn run() -> Result<(), Error> {
 	conduct_asking(subjects, &mut answers);
 	save_toml(answer_filename, answers);
 
-	//ms_translate("Ich schreibe ein programm", translate_to, None, &auth_token);
 	println!("Finished!");
 	return Ok(());
 }
@@ -193,8 +192,6 @@ fn ms_translate(text: &str, translate_to: &str, lang_from: Option<String>, at: &
 	let mut res = client.get(url)
 		.header(Authorization(format!(" Bearer {}", at.access_token)))
 		.send().unwrap();
-		//.param("to", )
-		//.param("text", &mut text).send().unwrap();
 	let mut body = String::new();
 	res.read_to_string(&mut body).unwrap();
 
@@ -215,8 +212,8 @@ fn load_toml(path: &str) -> toml::Table {
 		.expect(&format!("Failed to read toml file '{}'", path));
 	let mut parser = toml::Parser::new(&mut s);
 	match parser.parse() {
-		Some(value) => { /*println!("found toml: {:?}", value);*/ value },
-		None => panic!("parse errors: {:?}", parser.errors),
+		Some(value) => value,
+		None => panic!("parse error: {:?}", parser.errors),
 	}
 }
 
@@ -324,7 +321,6 @@ fn blob_parser(blob_cont: &str, opt_btm: Option<&BTreeMap<String, String>>) -> R
 	let mut res = BTreeMap::new();
 	let mut msgid = None;
 	for line in blob_cont.lines() {
-		//local tlin = String::from(line).trim();
 		if line.starts_with("msg") {
 			if line.starts_with("msgid ") {
 				match Some(&line["msgid ".len() .. ]) {
@@ -339,8 +335,8 @@ fn blob_parser(blob_cont: &str, opt_btm: Option<&BTreeMap<String, String>>) -> R
 							Some(msg_raw_id) => {
 								if match opt_btm {
 									Some(opt_btm_tr) => match opt_btm_tr.get(&msg_raw_id) {
-											Some(old_msg_raw_str) => {/*println!("line {} exists and changed={}", line, old_msg_raw_str);*/ (&msg_raw_str != old_msg_raw_str)}, // record changed entries
-											None => {/*println!("line {} is new", line);*/ true }, // record new entries
+											Some(old_msg_raw_str) => (&msg_raw_str != old_msg_raw_str), // record changed entries
+											None => true, // record new entries
 										},
 									None => true, // record everything for the first run
 								} {
