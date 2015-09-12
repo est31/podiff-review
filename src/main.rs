@@ -40,6 +40,7 @@ use std::str;
 use std::fmt;
 use std::fs;
 use std::collections::BTreeMap;
+use std::collections::btree_map::Entry;
 use std::path::Path;
 
 use url::form_urlencoded;
@@ -272,21 +273,47 @@ impl QuestionSubject {
 	}
 }
 
-/// Loads the question file,
 fn conduct_asking(qsl: Vec<QuestionSubject>, answ: &mut toml::Table) {
+	let mut ok_old_ctr = 0;
+	let mut notok_old_ctr = 0;
+	let mut ok_new_ctr = 0;
+	let mut notok_new_ctr = 0;
+	let mut ignored_ctr = 0;
 	for qu in qsl {
 		let subj_id = qu.get_subject_id();
-		if !answ.contains_key(&subj_id) {
-			match askq(&qu) {
-				PDDesc::Ok=>{ answ.insert(subj_id,toml::Value::Boolean(true)); },
-				PDDesc::NotOk=>{ answ.insert(subj_id,toml::Value::Boolean(false));},
+		match answ.entry(subj_id.clone()) {
+			Entry::Vacant(e) => match askq(&qu) {
+				PDDesc::Ok => {
+					e.insert(toml::Value::Boolean(true));
+					ok_new_ctr += 1;
+				},
+				PDDesc::NotOk => {
+					e.insert(toml::Value::Boolean(false));
+					notok_new_ctr += 1
+				},
 				PDDesc::NoValid=>(), //Ignore :)
-				PDDesc::Later=>(), //Okay then :)
+				PDDesc::Later=>{ ignored_ctr += 1 }, //Okay then :)
+			},
+			Entry::Occupied(e) => {
+				println!("Already reviewed string {}", subj_id);
+				// already contained in ans!
+				let val: &toml::Value = e.get();
+				if match val.as_bool() {Some(w) => w, None => false} {
+					ok_old_ctr += 1;
+				} else {
+					notok_old_ctr += 1;
+				}
 			}
-		} else {
-			println!("Already reviewed string {}", subj_id);
-			// already contained in ans!
 		}
+	}
+	if notok_new_ctr + notok_old_ctr + ignored_ctr == 0 {
+		println!("Review succeeded ({} times ok, of which {} new and {} loaded from file)",
+			ok_new_ctr + ok_old_ctr, ok_new_ctr, ok_old_ctr);
+	} else {
+		println!("Review not succeeded ({} times not ok ({} new), {} times ok ({} new), {} ignores)",
+			notok_new_ctr + notok_old_ctr, notok_new_ctr,
+			ok_new_ctr + ok_old_ctr, ok_new_ctr,
+			ignored_ctr);
 	}
 }
 
