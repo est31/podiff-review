@@ -6,9 +6,15 @@ Podiff-review is a small program that helps one checking translation changes van
 
 *Note: this is my first non-hello-world program in rust, so don't look at the source :).*
 
+If everything is set up, you only have to do
+```bash
+cargo run commit-id
+```
+and then podiff-review asks you for each changed translation whether it is acceptable or not.
+
 ## Setup
 
-In order to be abled to run `podiff-review`, you need to set up some things first.
+Before running `podiff-review`, you need to set up some things first.
 First, you'll need API access to the microsoft translator API ([Step through on how to set it up](http://blogs.msdn.com/b/translation/p/gettingstarted1.aspx) ). Microsoft gives one 2 million translated chars for free, so don't worry, you don't have to pay for "normal" amounts of translations to review.
 
 After having API access up, you should create a `settings.toml` file in the directory you want to run `podiff-review`, with the following content:
