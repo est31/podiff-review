@@ -403,6 +403,10 @@ fn get_subjects_from_diff_and_trees(diff: &Diff, repo: &Repository, tree_old: Tr
 	let mut res = Vec::new();
 	let changed_filenames = try!(get_changed_filenames(diff));
 	for fname in changed_filenames {
+		if !fname.filename.ends_with(".po") {
+			println!("Ignoring non-po ending file {}", fname.filename);
+			continue;
+		}
 		match fname.reason {
 			FilenameChangeReason::Add => {
 				let fnamef = fname.filename.as_ref();
