@@ -195,6 +195,9 @@ fn ms_translate(text: &str, translate_to: &str, lang_from: Option<String>, at: &
 	let mut body = String::new();
 	res.read_to_string(&mut body).unwrap();
 
+	if body.len() < 68 + 9  {
+		panic!(format!("Could not translate '{}': body has wrong format: '{}'", text, &body));
+	}
 	let mut body_stripped
 		= &body[68 .. body.len() - 9]; //TODO better xml parsing
 	println!("Translated {}", &body_stripped);
