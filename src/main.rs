@@ -387,7 +387,7 @@ fn get_subjects_from_diff_and_trees(diff: &Diff, repo: &Repository, tree_old: Tr
 	let changed_filenames = try!(get_changed_filenames(diff));
 	for fname in changed_filenames {
 		match fname.reason {
-			FilenameChangeReason::add => {
+			FilenameChangeReason::Add => {
 				let fnamef = fname.filename.as_ref();
 				let po_map = try!(selfcontained_blob_parser(repo, &tree_new, fnamef, None));
 				// we have no old versions
@@ -403,7 +403,7 @@ fn get_subjects_from_diff_and_trees(diff: &Diff, repo: &Repository, tree_old: Tr
 					});
 				}
 			},
-			FilenameChangeReason::modify => {
+			FilenameChangeReason::Modify => {
 				let fnamef = fname.filename.as_ref();
 				let old_po_map = try!(selfcontained_blob_parser(repo, &tree_old, fnamef, None));
 				let new_po_map = try!(selfcontained_blob_parser(repo, &tree_new, fnamef, Some(&old_po_map)));
@@ -424,7 +424,7 @@ fn get_subjects_from_diff_and_trees(diff: &Diff, repo: &Repository, tree_old: Tr
 					});
 				}
 			},
-			FilenameChangeReason::delete => {
+			FilenameChangeReason::Delete => {
 				// do nothing here, perhaps notify...
 			},
 		}
@@ -434,17 +434,17 @@ fn get_subjects_from_diff_and_trees(diff: &Diff, repo: &Repository, tree_old: Tr
 
 
 enum FilenameChangeReason {
-	add,
-	modify,
-	delete,
+	Add,
+	Modify,
+	Delete,
 }
 
 impl fmt::Display for FilenameChangeReason {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match *self {
-			FilenameChangeReason::add => write!(f, "add"),
-			FilenameChangeReason::modify => write!(f, "modify"),
-			FilenameChangeReason::delete => write!(f, "delete"),
+			FilenameChangeReason::Add => write!(f, "add"),
+			FilenameChangeReason::Modify => write!(f, "modify"),
+			FilenameChangeReason::Delete => write!(f, "delete"),
 		}
 	}
 }
@@ -467,9 +467,9 @@ fn get_changed_filenames(diff: &Diff) -> Result<Vec<FilenameChange>, Error> {
 		let st = String::from(str::from_utf8(line.content()).unwrap());
 		let mut stc = st.chars();
 		let reason = match stc.next().unwrap() {
-			'A' => FilenameChangeReason::add,
-			'D' => FilenameChangeReason::delete,
-			'M' => FilenameChangeReason::modify,
+			'A' => FilenameChangeReason::Add,
+			'D' => FilenameChangeReason::Delete,
+			'M' => FilenameChangeReason::Modify,
 			_ => panic!("Unknown filename change!"),
 		};
 		let col: String = stc.collect();
