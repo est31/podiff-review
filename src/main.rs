@@ -323,32 +323,24 @@ fn blob_parser(blob_cont: &str, opt_btm: Option<&BTreeMap<String, String>>) -> R
 	for line in blob_cont.lines() {
 		if line.starts_with("msg") {
 			if line.starts_with("msgid ") {
-				match Some(&line["msgid ".len() .. ]) {
-					Some(val) => msgid = Some(String::from(val.trim_matches('"'))),
-					None =>(),
-				}
+				msgid = Some(line["msgid ".len() .. ].trim_matches('"'));
 			} else if line.starts_with("msgstr ") {
-				match Some(&line["msgstr ".len() .. ]) {
-					Some(val) => {
-						let msg_raw_str = String::from(val.trim_matches('"'));
-						match msgid {
-							Some(msg_raw_id) => {
-								if match opt_btm {
-									Some(opt_btm_tr) => match opt_btm_tr.get(&msg_raw_id) {
-											Some(old_msg_raw_str) => (&msg_raw_str != old_msg_raw_str), // record changed entries
-											None => true, // record new entries
-										},
-									None => true, // record everything for the first run
-								} {
-									res.insert(msg_raw_id, msg_raw_str);
-								}
-							},
-							None =>(), // TODO do sth, this is invalid format!!
+				let msg_raw_str = String::from(line["msgstr ".len() .. ].trim_matches('"'));
+				match msgid {
+					Some(msg_raw_id) => {
+						if match opt_btm {
+							Some(opt_btm_tr) => match opt_btm_tr.get(msg_raw_id) {
+									Some(old_msg_raw_str) => (&msg_raw_str != old_msg_raw_str), // record changed entries
+									None => true, // record new entries
+								},
+							None => true, // record everything for the first run
+						} {
+							res.insert(String::from(msg_raw_id), msg_raw_str);
 						}
-						msgid = None;
 					},
-					None =>(),
+					None =>(), // TODO do sth, this is invalid format!!
 				}
+				msgid = None;
 			}
 		};
 	}
