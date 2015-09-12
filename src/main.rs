@@ -92,7 +92,7 @@ fn run() -> Result<(), Error> {
 	};
 	let mut answers = if exists {
 		load_toml(answer_filename) } else { toml::Table::new() };
-	conduct_asking(subjects, &mut answers);
+	conduct_asking(subjects, &mut answers, true);
 	save_toml(answer_filename, answers);
 
 	println!("Finished!");
@@ -282,12 +282,13 @@ impl QuestionSubject {
 	}
 }
 
-fn conduct_asking(qsl: Vec<QuestionSubject>, answ: &mut toml::Table) {
+fn conduct_asking(qsl: Vec<QuestionSubject>, answ: &mut toml::Table, reask_non_ok: bool) {
 	let mut ok_old_ctr = 0;
 	let mut notok_old_ctr = 0;
 	let mut ok_new_ctr = 0;
 	let mut notok_new_ctr = 0;
 	let mut ignored_ctr = 0;
+
 	for qu in qsl {
 		let subj_id = qu.get_subject_id();
 		match answ.entry(subj_id.clone()) {
@@ -303,14 +304,31 @@ fn conduct_asking(qsl: Vec<QuestionSubject>, answ: &mut toml::Table) {
 				PDDesc::NoValid=>(), //Ignore :)
 				PDDesc::Later=>{ ignored_ctr += 1 }, //Okay then :)
 			},
-			Entry::Occupied(e) => {
+			Entry::Occupied(mut e) => {
 				println!("Already reviewed string {}", subj_id);
 				// already contained in ans!
-				let val: &toml::Value = e.get();
+				let val: &toml::Value = &e.get().clone();
 				if match val.as_bool() {Some(w) => w, None => false} {
 					ok_old_ctr += 1;
 				} else {
-					notok_old_ctr += 1;
+					if reask_non_ok {
+						match askq(&qu) {
+							PDDesc::Ok => {
+								e.insert(toml::Value::Boolean(true));
+								ok_new_ctr += 1;
+							},
+							PDDesc::NotOk => {
+								notok_old_ctr += 1;
+							},
+							PDDesc::NoValid=>(), //Ignore :)
+							PDDesc::Later=>{
+								e.remove();
+								ignored_ctr += 1;
+							},
+						}
+					} else {
+						notok_old_ctr += 1;
+					}
 				}
 			}
 		}
