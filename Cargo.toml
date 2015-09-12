@@ -10,9 +10,3 @@ toml = "0.1.22"
 rustc-serialize = "0.3.16"
 hyper = "0.6.13"
 url = "0.2.37"
-
-[dev-dependencies]
-docopt = "0.6"
-rustc-serialize = "0.3"
-time = "0.1"
-tempdir = "0.3"
