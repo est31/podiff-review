@@ -231,7 +231,6 @@ fn save_toml(path: &str, tbl: toml::Table) {
 	let mut f = File::create(path)
 		.ok()
 		.expect(&format!("Failed to open toml file '{}'", path));
-	let mut s = String::new();
 	f.write_all(toml::Value::Table(tbl).to_string().as_bytes())
 		.ok()
 		.expect(&format!("Failed to write toml file '{}'", path));
