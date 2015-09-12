@@ -4,6 +4,8 @@ A tool to review `gettext` po language file commits, written in rust.
 
 Podiff-review is a small program that helps one checking translation changes vandalism, using the Microsoft Translator API to give you translations to give you a general overview.
 
+*Note: this is my first non-hello-world program in rust, so don't look at the source :).*
+
 ## Setup
 
 In order to be abled to run `podiff-review`, you need to set up some things first.
