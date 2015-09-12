@@ -48,4 +48,4 @@ The `commit-id` is the usual git hash of the commit to review in git.
 The tool will then ask you about translation changes. You can answer with `y` for Ok, `n` for not Ok, and `l` for "I want to look at it **l**ater".
 It automatically puts answered questions into `answers.toml`, for later inspection.
 
-`podiff-review` will display whether a commit is regarded as "approved", and provide stats about how many lines failed.
+`podiff-review` will display whether a commit is regarded as "approved", and provide general stats about approval status.
