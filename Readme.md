@@ -6,9 +6,13 @@ Podiff-review is a small program that helps one checking translation changes van
 
 ## Setup
 
-In order to be abled to run `podiff-review`, you need to set up some configs first.
-First, you'll need API access to the microsoft translator API.
+In order to be abled to run `podiff-review`, you need to set up some things first.
+First, you'll need API access to the microsoft translator API ([Step through on how to set it up](http://blogs.msdn.com/b/translation/p/gettingstarted1.aspx) ). Microsoft gives one 2 million translated chars for free, so don't worry, you don't have to pay for "normal" amounts of translations to review.
+
+After having API access up, you should create a `settings.toml` file in the directory you want to run `podiff-review`, with the following content:
+
 ```toml
+# The repo whose commits to review
 repo = "/path/to/git/repo"
 
 # Language to translate to
@@ -17,7 +21,7 @@ translate-to = "en"
 
 # Microsoft translator related settings
 
-ms-auth-secret = "<secret here>"
+ms-auth-secret = "<client secret here>"
 ms-client-id = "<client id here>"
 
 ```
