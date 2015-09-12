@@ -2,7 +2,7 @@
 
 A tool to review `gettext` po language file commits, written in rust.
 
-Podiff-review is a small program that helps one checking translation changes vandalism, using the Microsoft Translator API to give you translations to give you a general overview.
+Podiff-review is a small program that helps one to check git-based translation changes for vandalism, using the Microsoft Translator API.
 
 *Note: this is my first non-hello-world program in rust, so don't look at the source :).*
 
@@ -15,10 +15,10 @@ and then podiff-review asks you for each changed translation whether it is accep
 ## Setup
 
 Before running `podiff-review`, you need to set up some things first.
-First, you'll need API keys for the microsoft translator API ([Walkthrough on how to set it up](http://blogs.msdn.com/b/translation/p/gettingstarted1.aspx) ).
+First, you'll need API keys for the Microsoft Translator API ([Walkthrough on how to set it up](http://blogs.msdn.com/b/translation/p/gettingstarted1.aspx) ).
 Microsoft gives one 2 million translated chars for free, so don't worry, you don't have to pay for "normal" amounts of translations to review.
 
-After having API access up, you should create a `settings.toml` file in the directory you want to run `podiff-review`, with the following content:
+After having obtained API keys, you should create a `settings.toml` file in the directory you want to run `podiff-review` in, with the following content:
 
 ```toml
 # The repo whose commits to review
