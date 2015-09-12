@@ -176,6 +176,13 @@ fn ms_translate(text: &str, translate_to: &str, lang_from: Option<String>, at: &
 	let mut client = Client::new();
 	let mut url = Url::parse("http://api.microsofttranslator.com/V2/Http.svc/Translate").unwrap();
 
+	// Fixes crash on translating empty strings, which are replied to by microsoft with
+	// <string etc etc/> and not <string etc etc></string>,
+	// which breaks our shit xml parsing
+	if text.len() == 0 {
+		return "".to_string();
+	}
+
 	match lang_from {
 		Some(langc) => {
 			url.set_query_from_pairs([
