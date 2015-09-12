@@ -40,7 +40,6 @@ use std::str;
 use std::fmt;
 use std::fs;
 use std::collections::BTreeMap;
-use rustc_serialize::hex::ToHex;
 use std::path::Path;
 
 use url::form_urlencoded;
@@ -232,16 +231,6 @@ enum PDDesc {
 	NotOk,
 	NoValid,
 	Later,
-}
-
-fn pddesc_from_i(i: i8) -> Option<PDDesc> {
-	return Some(match i {
-		0 => PDDesc::Ok,
-		1 => PDDesc::NotOk,
-		2 => PDDesc::NoValid,
-		3 => PDDesc::Later,
-		_ => return None,
-	});
 }
 
 #[derive(Default)]
