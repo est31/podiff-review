@@ -238,15 +238,17 @@ struct QuestionSubject {
 	commit_id: String,
 	from_filename: String,
 	orig: String,
-	old: String,
+	old: Option<String>,
 	new: String,
 	oldtrans: String,
 	newtrans: String,
 }
 
 fn askq(qs: &QuestionSubject) -> PDDesc {
+	let no_available_str = "<no old version available>".to_string();
 	println!("Original: '{}'\n\nOld: {}\nNew: {}\n\nOld translated: {}\nNew translated: {}",
-		qs.orig, qs.old, qs.new, qs.oldtrans, qs.newtrans);
+		qs.orig, match qs.old { Some(ref v)=>v, None=>&no_available_str },
+		qs.new, qs.oldtrans, qs.newtrans);
 
 	let mut answ = String::from("Your answer: ");
 	io::stdin().read_line(&mut answ)
@@ -357,7 +359,7 @@ fn get_subjects_from_diff_and_trees(diff: &Diff, repo: &Repository, tree_old: Tr
 						commit_id: commit_id.to_string(),
 						from_filename: fnamef.to_string(),
 						orig: key.to_string(),
-						old: "<no old version available>".to_string(),
+						old: None,
 						new: val.to_string(),
 						oldtrans: "<no old version available>".to_string(),
 						newtrans: trans.translate_s(val),
@@ -376,7 +378,7 @@ fn get_subjects_from_diff_and_trees(diff: &Diff, repo: &Repository, tree_old: Tr
 						commit_id: commit_id.to_string(),
 						from_filename: fnamef.to_string(),
 						orig: key.to_string(),
-						old: match oldval { Some(v) => v.clone(), None => "?????".to_string()},
+						old: match oldval { Some(v) => Some(v.clone()), None => None},
 						new: val.to_string(),
 						oldtrans: match oldval {
 							Some(v) => trans.translate_s(v),
