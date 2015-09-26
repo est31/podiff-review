@@ -43,10 +43,8 @@ use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
 use std::path::Path;
 
-use url::form_urlencoded;
-use hyper::{Client, Url};
-use hyper::header::Authorization;
-use rustc_serialize::json;
+mod t6tor;
+use t6tor::*;
 
 macro_rules! otry {
 	($expr:expr) => (match $expr {
@@ -78,9 +76,8 @@ fn run() -> Result<(), Error> {
 		println!("Seen file change: {}; ", st);
 	}
 
-	let auth_token = get_token(&settings);
 	let translate_to = settings.get("translate-to").unwrap().as_str().unwrap();
-	let trans = MsTranslator { token: auth_token, lang_to: translate_to.to_string() };
+	let trans = t6tor::ms_translator(&settings, translate_to.to_string());
 
 	let subjects = try!(get_subjects_for_commit(&commit_identifier, &repo, &trans));
 
@@ -104,112 +101,6 @@ fn open_repo(path: &str) -> Repository {
 		Ok(repo) => repo,
 		Err(e) => panic!("failed to open git repo: {}", e),
 	};
-}
-
-fn get_token(st: &toml::Table) -> AuthToken {
-	// documented at https://msdn.microsoft.com/en-us/library/hh454950.aspx
-	let mut client = Client::new();
-	let client_id = st.get("ms-client-id").unwrap().as_str().unwrap();
-	let client_secret = st.get("ms-auth-secret").unwrap().as_str().unwrap();
-	let params = vec![
-			("client_id", client_id),
-			("client_secret", client_secret),
-			("scope", "http://api.microsofttranslator.com"),
-			("grant_type", "client_credentials")];
-	let body = form_urlencoded::serialize(params.into_iter());
-
-	// do the request
-	let mut res = client.post("https://datamarket.accesscontrol.windows.net/v2/OAuth2-13")
-		.body(&*body).send().unwrap();
-
-	let mut body_res = String::new();
-	res.read_to_string(&mut body_res).unwrap();
-	let body_dec: AuthToken = json::decode(&body_res).unwrap();
-
-	//println!("{}", body_res);
-	return body_dec;
-}
-
-#[derive(RustcDecodable, RustcEncodable)]
-struct AuthToken {
-	token_type: String,
-	access_token: String,
-	expires_in: u64,
-	scope: String,
-}
-
-struct MsTranslator {
-	token: AuthToken,
-	lang_to: String,
-}
-
-struct NoTranslator;
-
-impl Translator for NoTranslator {
-	fn translate(&self, text: &str, lang_from: Option<String>) -> String {
-		return text.to_owned();
-	}
-	fn translate_s(&self, text: &str) -> String {
-		return self.translate(text, None);
-	}
-}
-
-impl Translator for MsTranslator {
-	fn translate(&self, text: &str, lang_from: Option<String>) -> String {
-		return ms_translate(text, self.lang_to.as_ref(), lang_from, &self.token);
-	}
-	fn translate_s(&self, text: &str) -> String {
-		return self.translate(text, None);
-	}
-}
-
-trait Translator {
-	fn translate(&self, text: &str, lang_from: Option<String>) -> String;
-
-	fn translate_s(&self, text: &str) -> String {
-		return self.translate(text, None);
-	}
-}
-
-fn ms_translate(text: &str, translate_to: &str, lang_from: Option<String>, at: &AuthToken) -> String {
-	// documented at https://msdn.microsoft.com/en-us/library/ff512421.aspx
-	let mut client = Client::new();
-	let mut url = Url::parse("http://api.microsofttranslator.com/V2/Http.svc/Translate").unwrap();
-
-	// Fixes crash on translating empty strings, which are replied to by microsoft with
-	// <string etc etc/> and not <string etc etc></string>,
-	// which breaks our shit xml parsing
-	if text.len() == 0 {
-		return "".to_string();
-	}
-
-	match lang_from {
-		Some(langc) => {
-			url.set_query_from_pairs([
-				("from", langc.as_ref())
-			].iter().map(|&(k,v)| (k,v)));
-		},
-		None => (),
-	}
-	url.set_query_from_pairs([
-			("to", translate_to),
-			("text", text)
-		].iter().map(|&(k,v)| (k,v)));
-	//println!("URL:; {}", url.serialize());
-	let mut res = client.get(url)
-		.header(Authorization(format!(" Bearer {}", at.access_token)))
-		.send().unwrap();
-	let mut body = String::new();
-	res.read_to_string(&mut body).unwrap();
-
-	if body.len() < 68 + 9  {
-		panic!(format!("Could not translate '{}': body has wrong format: '{}'", text, &body));
-	}
-	let mut body_stripped
-		= &body[68 .. body.len() - 9]; //TODO better xml parsing
-	println!("Translated {}", &body_stripped);
-
-	return body_stripped.to_string();
 }
 
 fn load_toml(path: &str) -> toml::Table {
