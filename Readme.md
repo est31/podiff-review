@@ -31,6 +31,13 @@ repo = "/path/to/git/repo"
 
 translate-to = "en"
 
+# Optional Rust regex for detecting the language of the changed translation
+# Filenames not matching are seen as invalid
+# If not specified validity check is checking for .po ending
+# Full docs at https://doc.rust-lang.org/regex/regex/index.html
+
+filename-regex = "^po/([^/]+)/projectname.po$"
+
 # Translation API to use
 # "ms" Microsoft
 # "yn" Yandex

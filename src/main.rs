@@ -28,6 +28,7 @@ extern crate hyper;
 extern crate toml;
 extern crate git2;
 extern crate url;
+extern crate regex;
 extern crate rustc_serialize;
 
 use std::env;
@@ -43,6 +44,7 @@ use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
 use std::path::Path;
 use std::ops::Deref;
+use regex::Regex;
 
 mod t6tor;
 use t6tor::*;
@@ -88,7 +90,9 @@ fn run() -> Result<(), Error> {
 	if let Some(attri) = trans.attribution_info() {
 		println!("\n{}\n", attri);
 	}
-	let subjects = try!(get_subjects_for_commit(&commit_identifier, &repo, trans.deref()));
+	let regex_opt = settings.get("filename-regex").map_or(None, |s| s.as_str());
+
+	let subjects = try!(get_subjects_for_commit(&commit_identifier, &repo, trans.deref(), regex_opt));
 
 	//let answer_filename = format!("answers.{}.toml", commit_identifier);
 	let answer_filename = "answers.toml";
@@ -247,13 +251,13 @@ fn conduct_asking(qsl: Vec<QuestionSubject>, answ: &mut toml::Table, reask_non_o
 // Git stuff
 
 /// main parser handler and entry function
-fn get_subjects_for_commit(commit_id: &str, repo: &Repository, trans: &Translator) -> Result<Vec<QuestionSubject>, Error> {
+fn get_subjects_for_commit(commit_id: &str, repo: &Repository, trans: &Translator, filename_regex :Option<&str>) -> Result<Vec<QuestionSubject>, Error> {
 	let commit = try!(repo.find_commit(try!(Oid::from_str(commit_id))));
 	let diff = try!(get_diff_for_commit(repo, commit_id));
 	let old_tree = try!(try!(commit.parent(0)).tree());
 	let new_tree = try!(commit.tree());
 
-	return get_subjects_from_diff_and_trees(&diff, repo, old_tree, new_tree, trans, commit_id);
+	return get_subjects_from_diff_and_trees(&diff, repo, old_tree, new_tree, trans, commit_id, filename_regex);
 }
 
 fn selfcontained_blob_parser(rep: &Repository, tree: &Tree, fname: &str, opt_btm: Option<&BTreeMap<String, String>>) -> Result<BTreeMap<String, String>, Error> {
@@ -299,12 +303,25 @@ fn get_obj_for_filename_and_tree<'repo>(rep: &'repo Repository, tree: &Tree, fna
 	return Ok(tree_obj);
 }
 
-fn get_subjects_from_diff_and_trees(diff: &Diff, repo: &Repository, tree_old: Tree, tree_new: Tree, trans: &Translator, commit_id: &str) -> Result<Vec<QuestionSubject>, Error> {
+fn filename_to_language<'a>(filename :&'a str, regex :&str) -> Option<&'a str> {
+	let re = Regex::new(regex).unwrap();;
+	return re.captures(filename).map_or(None, |cap| cap.at(1));
+}
+
+fn get_subjects_from_diff_and_trees(diff: &Diff, repo: &Repository, tree_old: Tree, tree_new: Tree, trans: &Translator, commit_id: &str, filename_regex :Option<&str>) -> Result<Vec<QuestionSubject>, Error> {
 	let mut res = Vec::new();
 	let changed_filenames = try!(get_changed_filenames(diff));
 	for fname in changed_filenames {
-		if !fname.filename.ends_with(".po") {
+		if filename_regex.is_none() && !fname.filename.ends_with(".po") {
 			println!("Ignoring non-po ending file {}", fname.filename);
+			continue;
+		}
+		let from_lang = filename_regex.map_or(None, |regex| filename_to_language(&fname.filename, regex));
+		if from_lang.is_some() {
+			println!("Detected language '{}' for file {}", from_lang.unwrap(), fname.filename);
+		}
+		if filename_regex.is_some() && from_lang.is_none() {
+			println!("Ignoring file not matching given regex {}", fname.filename);
 			continue;
 		}
 		match fname.reason {
@@ -320,7 +337,7 @@ fn get_subjects_from_diff_and_trees(diff: &Diff, repo: &Repository, tree_old: Tr
 						old: None,
 						new: val.to_string(),
 						oldtrans: "<no old version available>".to_string(),
-						newtrans: trans.translate_s(val),
+						newtrans: trans.translate(val, from_lang),
 					});
 				}
 			},
@@ -339,9 +356,9 @@ fn get_subjects_from_diff_and_trees(diff: &Diff, repo: &Repository, tree_old: Tr
 						old: match oldval { Some(v) => Some(v.clone()), None => None},
 						new: val.to_string(),
 						oldtrans: match oldval {
-							Some(v) => trans.translate_s(v),
+							Some(v) => trans.translate(v, from_lang),
 							None => "?????".to_string()},
-						newtrans: trans.translate_s(val),
+						newtrans: trans.translate(val, from_lang),
 					});
 				}
 			},

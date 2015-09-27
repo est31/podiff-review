@@ -34,7 +34,7 @@ use std::io::Read;
 use url::form_urlencoded;
 
 pub trait Translator {
-	fn translate(&self, text: &str, lang_from: Option<String>) -> String;
+	fn translate(&self, text: &str, lang_from: Option<&str>) -> String;
 
 	fn translate_s(&self, text: &str) -> String {
 		return self.translate(text, None);
@@ -45,7 +45,7 @@ pub trait Translator {
 struct NoTranslator;
 
 impl Translator for NoTranslator {
-	fn translate(&self, text: &str, lang_from: Option<String>) -> String {
+	fn translate(&self, text: &str, lang_from: Option<&str>) -> String {
 		return text.to_owned();
 	}
 	fn translate_s(&self, text: &str) -> String {
@@ -66,7 +66,7 @@ pub struct MsTranslator {
 }
 
 impl Translator for MsTranslator {
-	fn translate(&self, text: &str, lang_from: Option<String>) -> String {
+	fn translate(&self, text: &str, lang_from: Option<&str>) -> String {
 		return ms_translate(text, self.lang_to.as_ref(), lang_from, &self.token);
 	}
 	fn translate_s(&self, text: &str) -> String {
@@ -92,7 +92,7 @@ struct MsAuthToken {
 }
 
 
-fn ms_translate(text: &str, translate_to: &str, lang_from: Option<String>, at: &MsAuthToken) -> String {
+fn ms_translate(text: &str, translate_to: &str, lang_from: Option<&str>, at: &MsAuthToken) -> String {
 	// documented at https://msdn.microsoft.com/en-us/library/ff512421.aspx
 	let mut client = Client::new();
 	let mut url = Url::parse("http://api.microsofttranslator.com/V2/Http.svc/Translate").unwrap();
@@ -167,7 +167,7 @@ pub struct YnTranslator {
 }
 
 impl Translator for YnTranslator {
-	fn translate(&self, text: &str, lang_from: Option<String>) -> String {
+	fn translate(&self, text: &str, lang_from: Option<&str>) -> String {
 		return yn_translate(text, self.lang_to.as_ref(), lang_from, &self.api_key);
 	}
 	fn translate_s(&self, text: &str) -> String {
@@ -193,7 +193,7 @@ pub struct YnTranslationReply  {
 }
 
 
-fn yn_translate(text: &str, translate_to: &str, lang_from: Option<String>, api_key: &str) -> String {
+fn yn_translate(text: &str, translate_to: &str, lang_from: Option<&str>, api_key: &str) -> String {
 	// documented at https://tech.yandex.com/translate/doc/dg/reference/translate-docpage/
 	let mut client = Client::new();
 	let mut url = Url::parse("https://translate.yandex.net/api/v1.5/tr.json/translate").unwrap();
@@ -220,6 +220,8 @@ fn yn_translate(text: &str, translate_to: &str, lang_from: Option<String>, api_k
 	res.read_to_string(&mut body).unwrap();
 
 	let body_json :YnTranslationReply = json::decode(&body).unwrap();
+
+	//println!("Translated {}", &body);
 	println!("Translated {}", &body_json.text[0]);
 
 	return body_json.text[0].clone();
