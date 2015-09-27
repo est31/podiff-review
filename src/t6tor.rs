@@ -33,6 +33,14 @@ use rustc_serialize::json;
 use std::io::Read;
 use url::form_urlencoded;
 
+pub trait Translator {
+	fn translate(&self, text: &str, lang_from: Option<String>) -> String;
+
+	fn translate_s(&self, text: &str) -> String {
+		return self.translate(text, None);
+	}
+}
+
 struct NoTranslator;
 
 impl Translator for NoTranslator {
@@ -44,9 +52,15 @@ impl Translator for NoTranslator {
 	}
 }
 
-pub trait Translator {
-	fn translate(&self, text: &str, lang_from: Option<String>) -> String;
+pub struct MsTranslator {
+	token: MsAuthToken,
+	lang_to: String,
+}
 
+impl Translator for MsTranslator {
+	fn translate(&self, text: &str, lang_from: Option<String>) -> String {
+		return ms_translate(text, self.lang_to.as_ref(), lang_from, &self.token);
+	}
 	fn translate_s(&self, text: &str) -> String {
 		return self.translate(text, None);
 	}
@@ -64,19 +78,6 @@ struct MsAuthToken {
 	scope: String,
 }
 
-pub struct MsTranslator {
-	token: MsAuthToken,
-	lang_to: String,
-}
-
-impl Translator for MsTranslator {
-	fn translate(&self, text: &str, lang_from: Option<String>) -> String {
-		return ms_translate(text, self.lang_to.as_ref(), lang_from, &self.token);
-	}
-	fn translate_s(&self, text: &str) -> String {
-		return self.translate(text, None);
-	}
-}
 
 fn ms_translate(text: &str, translate_to: &str, lang_from: Option<String>, at: &MsAuthToken) -> String {
 	// documented at https://msdn.microsoft.com/en-us/library/ff512421.aspx
