@@ -39,6 +39,7 @@ pub trait Translator {
 	fn translate_s(&self, text: &str) -> String {
 		return self.translate(text, None);
 	}
+	fn attribution_info(&self) -> Option<String>;
 }
 
 struct NoTranslator;
@@ -49,6 +50,9 @@ impl Translator for NoTranslator {
 	}
 	fn translate_s(&self, text: &str) -> String {
 		return self.translate(text, None);
+	}
+	fn attribution_info(&self) -> Option<String> {
+		return None;
 	}
 }
 
@@ -63,6 +67,10 @@ impl Translator for MsTranslator {
 	}
 	fn translate_s(&self, text: &str) -> String {
 		return self.translate(text, None);
+	}
+	fn attribution_info(&self) -> Option<String> {
+		return Some("Translated by Microsoft. \
+			http://aka.ms/MicrosoftTranslatorAttribution".to_string());
 	}
 }
 

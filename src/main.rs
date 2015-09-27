@@ -79,6 +79,9 @@ fn run() -> Result<(), Error> {
 	let translate_to = settings.get("translate-to").unwrap().as_str().unwrap();
 	let trans = t6tor::ms_translator(&settings, translate_to.to_string());
 
+	if let Some(attri) = trans.attribution_info() {
+		println!("\n{}\n", attri);
+	}
 	let subjects = try!(get_subjects_for_commit(&commit_identifier, &repo, &trans));
 
 	//let answer_filename = format!("answers.{}.toml", commit_identifier);
