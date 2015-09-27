@@ -2,7 +2,8 @@
 
 A tool to review `gettext` po language file commits, written in rust.
 
-Podiff-review is a small program that helps one to check git-based translation changes for vandalism, using the Microsoft Translator API.
+Podiff-review is a small program that helps one to check git-based translation changes for vandalism, using an online API.
+It supports both the Microsoft Translator API, and the Yandex.Translate service.
 
 *Note: this is my first non-hello-world program in rust, so don't look at the source :).*
 
@@ -15,8 +16,10 @@ and then podiff-review asks you for each changed translation whether it is accep
 ## Setup
 
 Before running `podiff-review`, you need to set up some things first.
-First, you'll need API keys for the Microsoft Translator API ([Walkthrough on how to set it up](http://blogs.msdn.com/b/translation/p/gettingstarted1.aspx) ).
-Microsoft gives one 2 million translated chars for free, so don't worry, you don't have to pay for "normal" amounts of translations to review.
+First, you'll need to set up either Microsoft or Yandex API keys
+([Walkthrough for Microsoft](http://blogs.msdn.com/b/translation/p/gettingstarted1.aspx), [Key creation link for Yandex](https://tech.yandex.com/keys/get/?service=trnsl) ).
+
+Microsoft gives 2 million, Yandex gives 10 million translated chars for free, so don't worry, you don't have to pay for "normal" amounts of translations to review.
 
 After having obtained API keys, you should create a `settings.toml` file in the directory you want to run `podiff-review` in, with the following content:
 
@@ -28,10 +31,20 @@ repo = "/path/to/git/repo"
 
 translate-to = "en"
 
+# Translation API to use
+# "ms" Microsoft
+# "yn" Yandex
+
+translate-api = "yn"
+
 # Microsoft translator related settings
 
 ms-auth-secret = "<client secret here>"
 ms-client-id = "<client id here>"
+
+# Yandex.Translator related settings
+
+yn-api-key = "<API key here>"
 
 ```
 
