@@ -56,6 +56,10 @@ impl Translator for NoTranslator {
 	}
 }
 
+/********************************************************************
+* Microsoft API
+*********************************************************************/
+
 pub struct MsTranslator {
 	token: MsAuthToken,
 	lang_to: String,
@@ -150,4 +154,71 @@ fn ms_get_token(st: &toml::Table) -> MsAuthToken {
 
 	//println!("{}", body_res);
 	return body_dec;
+}
+
+/********************************************************************
+* Yandex API
+*********************************************************************/
+
+pub struct YnTranslator {
+	api_key: String,
+	lang_to: String,
+}
+
+impl Translator for YnTranslator {
+	fn translate(&self, text: &str, lang_from: Option<String>) -> String {
+		return yn_translate(text, self.lang_to.as_ref(), lang_from, &self.api_key);
+	}
+	fn translate_s(&self, text: &str) -> String {
+		return self.translate(text, None);
+	}
+	fn attribution_info(&self) -> Option<String> {
+		return Some("Powered by Yandex.Translate. \
+			http://translate.yandex.com/".to_string());
+	}
+}
+
+pub fn yn_translator(st: &toml::Table, lang_to: String) -> YnTranslator {
+	let api_key = st.get("yn-api-key").unwrap().as_str().unwrap();
+	return YnTranslator { api_key: api_key.to_string(), lang_to: lang_to };
+}
+
+#[derive(RustcDecodable, RustcEncodable)]
+pub struct YnTranslationReply  {
+    code: u8,
+    lang: String,
+    text: Vec<String>,
+}
+
+
+fn yn_translate(text: &str, translate_to: &str, lang_from: Option<String>, api_key: &str) -> String {
+	// documented at https://tech.yandex.com/translate/doc/dg/reference/translate-docpage/
+	let mut client = Client::new();
+	let mut url = Url::parse("https://translate.yandex.net/api/v1.5/tr.json/translate").unwrap();
+
+	// Fast-forward empty strings
+	if text.len() == 0 {
+		return "".to_string();
+	}
+
+	let translate_direction = match lang_from {
+		Some(langc) => format!("{}-{}", langc, translate_to),
+		None => translate_to.to_string(),
+	};
+
+	url.set_query_from_pairs([
+			("lang", translate_direction.as_ref()),
+			("key", api_key),
+			("text", text)
+		].iter().map(|&(k,v)| (k,v)));
+	//println!("URL:; {}", url.serialize());
+	let mut res = client.get(url)
+		.send().unwrap();
+	let mut body = String::new();
+	res.read_to_string(&mut body).unwrap();
+
+	let body_json :YnTranslationReply = json::decode(&body).unwrap();
+	println!("Translated {}", &body_json.text[0]);
+
+	return body_json.text[0].clone();
 }

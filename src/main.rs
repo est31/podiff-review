@@ -42,6 +42,7 @@ use std::fs;
 use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
 use std::path::Path;
+use std::ops::Deref;
 
 mod t6tor;
 use t6tor::*;
@@ -77,12 +78,17 @@ fn run() -> Result<(), Error> {
 	}
 
 	let translate_to = settings.get("translate-to").unwrap().as_str().unwrap();
-	let trans = t6tor::ms_translator(&settings, translate_to.to_string());
+	let api_name = settings.get("translate-api").unwrap().as_str().unwrap();
+	let trans = match api_name.as_ref() {
+		"ms" => Box::new(t6tor::ms_translator(&settings, translate_to.to_string())) as Box<Translator>,
+		"yn" => Box::new(t6tor::yn_translator(&settings, translate_to.to_string())) as Box<Translator>,
+		_ => panic!("invalid API specifier for translate-to"),
+	};
 
 	if let Some(attri) = trans.attribution_info() {
 		println!("\n{}\n", attri);
 	}
-	let subjects = try!(get_subjects_for_commit(&commit_identifier, &repo, &trans));
+	let subjects = try!(get_subjects_for_commit(&commit_identifier, &repo, trans.deref()));
 
 	//let answer_filename = format!("answers.{}.toml", commit_identifier);
 	let answer_filename = "answers.toml";
