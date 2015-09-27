@@ -73,6 +73,7 @@ impl Translator for MsTranslator {
 		return self.translate(text, None);
 	}
 	fn attribution_info(&self) -> Option<String> {
+		// Compliance with http://www.microsoft.com/en-us/translator/attribution.aspx
 		return Some("Translated by Microsoft. \
 			http://aka.ms/MicrosoftTranslatorAttribution".to_string());
 	}
@@ -173,6 +174,7 @@ impl Translator for YnTranslator {
 		return self.translate(text, None);
 	}
 	fn attribution_info(&self) -> Option<String> {
+		// Compliance with https://tech.yandex.com/translate/doc/dg/concepts/design-requirements-docpage/
 		return Some("Powered by Yandex.Translate. \
 			http://translate.yandex.com/".to_string());
 	}
