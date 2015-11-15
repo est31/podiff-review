@@ -223,7 +223,7 @@ fn conduct_asking(qsl: Vec<QuestionSubject>, answ: &mut toml::Table, reask_non_o
 				}
 			},
 			Entry::Occupied(mut e) => {
-				println!("Already reviewed string {}", subj_id);
+				println!("Already reviewed string '{}' (ID {})", qu.orig, subj_id);
 				// already contained in ans!
 				let val: &toml::Value = &e.get().clone();
 				if match val.as_bool() {Some(w) => w, None => false} {
