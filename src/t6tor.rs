@@ -42,9 +42,11 @@ pub trait Translator {
 	fn attribution_info(&self) -> Option<String>;
 }
 
+#[allow(dead_code)]
 struct NoTranslator;
 
 impl Translator for NoTranslator {
+	#[allow(unused_variables)]
 	fn translate(&self, text: &str, lang_from: Option<&str>) -> String {
 		return text.to_owned();
 	}
@@ -94,7 +96,7 @@ struct MsAuthToken {
 
 fn ms_translate(text: &str, translate_to: &str, lang_from: Option<&str>, at: &MsAuthToken) -> String {
 	// documented at https://msdn.microsoft.com/en-us/library/ff512421.aspx
-	let mut client = Client::new();
+	let client = Client::new();
 	let mut url = Url::parse("http://api.microsofttranslator.com/V2/Http.svc/Translate").unwrap();
 
 	// Fixes crash on translating empty strings, which are replied to by microsoft with
@@ -126,7 +128,7 @@ fn ms_translate(text: &str, translate_to: &str, lang_from: Option<&str>, at: &Ms
 	if body.len() < 68 + 9  {
 		panic!(format!("Could not translate '{}': body has wrong format: '{}'", text, &body));
 	}
-	let mut body_stripped
+	let body_stripped
 		= &body[68 .. body.len() - 9]; //TODO better xml parsing
 	println!("Translated {}", &body_stripped);
 
@@ -135,7 +137,7 @@ fn ms_translate(text: &str, translate_to: &str, lang_from: Option<&str>, at: &Ms
 
 fn ms_get_token(st: &toml::Table) -> MsAuthToken {
 	// documented at https://msdn.microsoft.com/en-us/library/hh454950.aspx
-	let mut client = Client::new();
+	let client = Client::new();
 	let client_id = st.get("ms-client-id").unwrap().as_str().unwrap();
 	let client_secret = st.get("ms-auth-secret").unwrap().as_str().unwrap();
 	let params = vec![
@@ -195,7 +197,7 @@ pub struct YnTranslationReply  {
 
 fn yn_translate(text: &str, translate_to: &str, lang_from: Option<&str>, api_key: &str) -> String {
 	// documented at https://tech.yandex.com/translate/doc/dg/reference/translate-docpage/
-	let mut client = Client::new();
+	let client = Client::new();
 	let mut url = Url::parse("https://translate.yandex.net/api/v1.5/tr.json/translate").unwrap();
 
 	// Fast-forward empty strings
