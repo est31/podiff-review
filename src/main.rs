@@ -180,6 +180,14 @@ fn askq(qs: &QuestionSubject) -> PDDesc {
 	return resp;
 }
 
+fn is_obviously_equal(qs: &QuestionSubject) -> bool {
+	if qs.newtrans == qs.orig {
+		return true;
+	}
+	// false otherwise
+	return false;
+}
+
 impl QuestionSubject {
 	fn get_subject_id(&self) -> String {
 		return format!("{}:{}:{}", self.commit_id, self.from_filename, self.orig);
@@ -196,17 +204,23 @@ fn conduct_asking(qsl: Vec<QuestionSubject>, answ: &mut toml::Table, reask_non_o
 	for qu in qsl {
 		let subj_id = qu.get_subject_id();
 		match answ.entry(subj_id.clone()) {
-			Entry::Vacant(e) => match askq(&qu) {
-				PDDesc::Ok => {
-					e.insert(toml::Value::Boolean(true));
-					ok_new_ctr += 1;
-				},
-				PDDesc::NotOk => {
-					e.insert(toml::Value::Boolean(false));
-					notok_new_ctr += 1
-				},
-				PDDesc::NoValid=>(), //Ignore :)
-				PDDesc::Later=>{ ignored_ctr += 1 }, //Okay then :)
+			Entry::Vacant(e) => if is_obviously_equal(&qu) {
+				println!("Fast-forward string '{}' because equal according to translator (ID {}).", qu.orig, subj_id);
+				e.insert(toml::Value::Boolean(true));
+				ok_new_ctr += 1;
+			} else {
+				match askq(&qu) {
+					PDDesc::Ok => {
+						e.insert(toml::Value::Boolean(true));
+						ok_new_ctr += 1;
+					},
+					PDDesc::NotOk => {
+						e.insert(toml::Value::Boolean(false));
+						notok_new_ctr += 1
+					},
+					PDDesc::NoValid=>(), //Ignore :)
+					PDDesc::Later=>{ ignored_ctr += 1 }, //Okay then :)
+				}
 			},
 			Entry::Occupied(mut e) => {
 				println!("Already reviewed string {}", subj_id);
