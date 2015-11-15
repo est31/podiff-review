@@ -181,7 +181,7 @@ fn askq(qs: &QuestionSubject) -> PDDesc {
 }
 
 fn is_obviously_equal(qs: &QuestionSubject) -> bool {
-	if qs.newtrans == qs.orig {
+	if qs.newtrans.to_lowercase() == qs.orig.to_lowercase() {
 		return true;
 	}
 	// false otherwise
