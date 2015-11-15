@@ -282,31 +282,60 @@ fn selfcontained_blob_parser(rep: &Repository, tree: &Tree, fname: &str, opt_btm
 
 fn blob_parser(blob_cont: &str, opt_btm: Option<&BTreeMap<String, String>>) -> Result<BTreeMap<String, String>, Error> {
 	let mut res = BTreeMap::new();
-	let mut msgid = None;
-	for line in blob_cont.lines() {
-		if line.starts_with("msg") {
-			if line.starts_with("msgid ") {
-				msgid = Some(line["msgid ".len() .. ].trim_matches('"'));
-			} else if line.starts_with("msgstr ") {
-				let msg_raw_str = String::from(line["msgstr ".len() .. ].trim_matches('"'));
-				match msgid {
-					Some(msg_raw_id) => {
-						if match opt_btm {
-							Some(opt_btm_tr) => match opt_btm_tr.get(msg_raw_id) {
-									Some(old_msg_raw_str) => (&msg_raw_str != old_msg_raw_str), // record changed entries
-									None => true, // record new entries
-								},
-							None => true, // record everything for the first run
-						} {
-							res.insert(String::from(msg_raw_id), msg_raw_str);
-						}
+	let mut msgid: Option<String> = None;
+	let mut msgstr: Option<String> = None;
+	let mut multi_line_mode = 0; // 0 = off, 1 = for msgid, 2 = for msgstr
+	macro_rules! handle_pair {
+		() => { {
+			if msgid.is_some() && msgstr.is_some() {
+				let msg_raw_id = msgid.take().unwrap();
+				let msg_raw_str = msgstr.take().unwrap();
+				if match opt_btm {
+					Some(opt_btm_tr) => match opt_btm_tr.get(&msg_raw_id) {
+						Some(old_msg_raw_str) => (&msg_raw_str != old_msg_raw_str), // record changed entries
+						None => true, // record new entries
 					},
-					None =>(), // TODO do sth, this is invalid format!!
+					None => true, // record everything for the first run
+				} {
+					// Allow everything except where msgid is "". This is special.
+					if msg_raw_id != "" {
+						res.insert(String::from(msg_raw_id), msg_raw_str);
+					}
 				}
-				msgid = None;
+			}
+		} }
+	}
+	for line in blob_cont.lines() {
+		if line.starts_with("\"") && (multi_line_mode > 0) {
+			match multi_line_mode {
+				1 => {
+					let s = msgid.unwrap();
+					msgid = Some(String::from(s) + line.trim_matches('"'));
+				},
+				2 => {
+					let s = msgstr.unwrap();
+					msgstr = Some(String::from(s) + line.trim_matches('"'));
+				},
+				_ => {
+					panic!("This shouldn't happen!");
+				},
+			}
+		} else {
+			multi_line_mode = 0;
+			handle_pair!();
+		}
+		if line.starts_with("msg") {
+
+			if line.starts_with("msgid ") {
+				msgid = Some(String::from(line["msgid ".len() .. ].trim_matches('"')));
+				multi_line_mode = 1;
+			} else if line.starts_with("msgstr ") {
+				msgstr = Some(String::from(line["msgstr ".len() .. ].trim_matches('"')));
+				multi_line_mode = 2;
 			}
 		};
 	}
+	handle_pair!();
 	return Ok(res);
 }
 
