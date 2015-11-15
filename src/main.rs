@@ -288,8 +288,10 @@ fn blob_parser(blob_cont: &str, opt_btm: Option<&BTreeMap<String, String>>) -> R
 	macro_rules! handle_pair {
 		() => { {
 			if msgid.is_some() && msgstr.is_some() {
-				let msg_raw_id = msgid.take().unwrap();
-				let msg_raw_str = msgstr.take().unwrap();
+				let mut msg_raw_id = msgid.take().unwrap();
+				let mut msg_raw_str = msgstr.take().unwrap();
+				msg_raw_id = msg_raw_id.replace("\\n", " | ");
+				msg_raw_str = msg_raw_str.replace("\\n", " | ");
 				if match opt_btm {
 					Some(opt_btm_tr) => match opt_btm_tr.get(&msg_raw_id) {
 						Some(old_msg_raw_str) => (&msg_raw_str != old_msg_raw_str), // record changed entries
