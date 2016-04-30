@@ -108,13 +108,11 @@ fn ms_translate(text: &str, translate_to: &str, lang_from: Option<&str>, at: &Ms
 
 	match lang_from {
 		Some(langc) => {
-			url.set_query_from_pairs([
-				("from", langc.as_ref())
-			].iter().map(|&(k,v)| (k,v)));
+			url.query_pairs_mut().append_pair("from", langc.as_ref());
 		},
 		None => (),
 	}
-	url.set_query_from_pairs([
+	url.query_pairs_mut().extend_pairs([
 			("to", translate_to),
 			("text", text)
 		].iter().map(|&(k,v)| (k,v)));
@@ -145,7 +143,8 @@ fn ms_get_token(st: &toml::Table) -> MsAuthToken {
 			("client_secret", client_secret),
 			("scope", "http://api.microsofttranslator.com"),
 			("grant_type", "client_credentials")];
-	let body = form_urlencoded::serialize(params.into_iter());
+	let body = form_urlencoded::Serializer::new(String::new())
+		.extend_pairs(params.into_iter()).finish();
 
 	// do the request
 	let mut res = client.post("https://datamarket.accesscontrol.windows.net/v2/OAuth2-13")
@@ -210,7 +209,7 @@ fn yn_translate(text: &str, translate_to: &str, lang_from: Option<&str>, api_key
 		None => translate_to.to_string(),
 	};
 
-	url.set_query_from_pairs([
+	url.query_pairs_mut().extend_pairs([
 			("lang", translate_direction.as_ref()),
 			("key", api_key),
 			("text", text)
